@@ -1,10 +1,7 @@
 import axios from "axios";
-import { Contract } from "ethers";
-import { Interface } from "ethers/lib/utils";
 import slugify from "slugify";
 
-import { parse } from "../parsers/simplehash";
-import { getProvider } from "../utils";
+import { parse } from "../parsers/modulenft";
 import { logger } from "../logger";
 
 const getNetworkName = (chainId) => {
@@ -77,21 +74,25 @@ export const fetchCollection = async (chainId, { contract, tokenId }) => {
 export const fetchTokens = async (chainId, tokens) => {
   const network = getNetworkName(chainId);
 
+  if (!tokens.length) {
+    return null;
+  }
   const searchParams = new URLSearchParams();
   const nftIds = tokens.map(
-    ({ contract, tokenId }) => `${network}.${contract}.${tokenId}`
+    ({ contract, tokenId }) => `${contract.toLowerCase()}:${tokenId}`
   );
-  searchParams.append("nft_ids", nftIds.join(","));
+  searchParams.append("token", nftIds.join(","));
 
-  const url = `https://api.simplehash.com/api/v0/nfts/assets?${searchParams.toString()}`;
+  const url = `https://api.modulenft.xyz/api/v2/${network}/nft/batchGetToken?${searchParams.toString()}`;
+  console.log(url);
   const data = await axios
     .get(url, {
-      headers: { "X-API-KEY": process.env.SIMPLEHASH_API_KEY.trim() },
+      headers: { accept: "application/json" },
     })
     .then((response) => response.data)
     .catch((error) => {
       logger.error(
-        "simplehash-fetcher",
+        "modulenft-fetcher",
         `fetchTokens error. chainId:${chainId}, message:${
           error.message
         },  status:${error.response?.status}, data:${JSON.stringify(
@@ -101,27 +102,12 @@ export const fetchTokens = async (chainId, tokens) => {
 
       throw error;
     });
+  console.log(data);
 
-  return data.nfts.map(parse).filter(Boolean);
+  return data.map(parse).filter(Boolean);
 };
 
 export const fetchContractTokens = async (chainId, contract, continuation) => {
-  const network = getNetworkName(chainId);
-
-  const searchParams = new URLSearchParams();
-  if (continuation) {
-    searchParams.append("cursor", continuation);
-  }
-
-  const url = `https://api.simplehash.com/api/v0/nfts/${network}/${contract}?${searchParams.toString()}`;
-  const data = await axios
-    .get(url, {
-      headers: { "X-API-KEY": process.env.SIMPLEHASH_API_KEY.trim() },
-    })
-    .then((response) => response.data);
-
-  return {
-    continuation: data.next,
-    metadata: data.nfts.map(parse).filter(Boolean),
-  };
+  // TODO: To implement
+  return null;
 };
