@@ -10,6 +10,7 @@ import * as rarible from "../../../../../src/fetchers/rarible";
 import * as simplehash from "../../../../../src/fetchers/simplehash";
 import * as centerdev from "../../../../../src/fetchers/centerdev";
 import * as soundxyz from "../../../../../src/fetchers/soundxyz";
+import * as modulenft from "../../../../../src/fetchers/modulenft";
 
 import { RequestWasThrottledError } from "../../../../../src/fetchers/errors";
 
@@ -41,7 +42,11 @@ const api = async (req, res) => {
 
     // Validate indexing method and set up provider
     const method = req.query.method;
-    if (!["opensea", "rarible", "simplehash", "centerdev", "soundxyz"].includes(method)) {
+    if (
+      !["opensea", "rarible", "simplehash", "centerdev", "soundxyz"].includes(
+        method
+      )
+    ) {
       throw new Error("Unknown method");
     }
 
@@ -109,17 +114,6 @@ const api = async (req, res) => {
       };
     });
 
-    // Method-specific validations
-    if (method === "opensea" && tokens.length > 20) {
-      throw new Error("Too many tokens");
-    }
-    if (method === "rarible" && tokens.length > 50) {
-      throw new Error("Too many tokens");
-    }
-    if (method === "centerdev" && tokens.length > 100) {
-      throw new Error("Too many tokens");
-    }
-
     // Filter out tokens that have custom handlers
     const customTokens = [];
     tokens = tokens.filter((token) => {
@@ -132,23 +126,61 @@ const api = async (req, res) => {
 
     let metadata = [];
     if (tokens.length) {
+      // try to get token meta from modulenft first
       try {
-        const newMetadata = await Promise.all(
-            await provider
-                .fetchTokens(chainId, tokens)
-                .then((l) =>
-                    l.map((metadata) => extendMetadata(chainId, metadata))
-                )
+        metadata = await Promise.all(
+          await modulenft
+            .fetchTokens(chainId, tokens)
+            .then((l) => l.map((metadata) => extendMetadata(chainId, metadata)))
         );
-
-        metadata = [...metadata, ...newMetadata];
-      } catch (error) {
-        if (error instanceof RequestWasThrottledError) {
-          return res
-            .status(429)
-            .json({ error: error.message, expires_in: error.delay });
+        console.log("metadata", metadata);
+        if (metadata && metadata.length) {
+          tokens = tokens.filter((token) => {
+            return (
+              metadata.findIndex(
+                (data) =>
+                  data.contract === token.contract &&
+                  +data.tokenId == +token.tokenId
+              ) == -1
+            );
+          });
+          console.log(tokens);
         }
-        throw error;
+      } catch (error) {
+        console.log(error);
+      }
+
+      // if modulenft doesn't support all tokens, use other methods
+      if (tokens.length) {
+        // Method-specific validations
+        if (method === "opensea" && tokens.length > 20) {
+          throw new Error("Too many tokens");
+        }
+        if (method === "rarible" && tokens.length > 50) {
+          throw new Error("Too many tokens");
+        }
+        if (method === "centerdev" && tokens.length > 100) {
+          throw new Error("Too many tokens");
+        }
+
+        try {
+          const newMetadata = await Promise.all(
+            await provider
+              .fetchTokens(chainId, tokens)
+              .then((l) =>
+                l.map((metadata) => extendMetadata(chainId, metadata))
+              )
+          );
+
+          metadata = [...metadata, ...newMetadata];
+        } catch (error) {
+          if (error instanceof RequestWasThrottledError) {
+            return res
+              .status(429)
+              .json({ error: error.message, expires_in: error.delay });
+          }
+          throw error;
+        }
       }
     }
 
