@@ -80,8 +80,6 @@ const api = async (req, res) => {
         tokenId,
       });
 
-      console.log("trying to get collection from modulenft", collection);
-
       if (!collection) {
         collection = await provider.fetchCollection(chainId, {
           contract,
@@ -95,7 +93,7 @@ const api = async (req, res) => {
     }
 
     const extended = await extendCollectionMetadata(chainId, collection);
-    logger.info("v4-metadata-collection", extended);
+    logger.info("v4-metadata-collection", extended.name);
 
     return res.status(200).json({
       collection: extended,
