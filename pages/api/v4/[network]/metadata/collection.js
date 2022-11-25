@@ -11,6 +11,7 @@ import * as rarible from "../../../../../src/fetchers/rarible";
 import * as simplehash from "../../../../../src/fetchers/simplehash";
 import * as centerdev from "../../../../../src/fetchers/centerdev";
 import * as soundxyz from "../../../../../src/fetchers/soundxyz";
+import * as modulenft from "../../../../../src/fetchers/modulenft";
 
 const api = async (req, res) => {
   try {
@@ -73,10 +74,19 @@ const api = async (req, res) => {
     if (hasCustomCollectionHandler(chainId, contract)) {
       collection = await customHandleCollection(chainId, { contract, tokenId });
     } else {
-      collection = await provider.fetchCollection(chainId, {
+      collection = await modulenft.fetchCollection(chainId, {
         contract,
         tokenId,
       });
+
+      console.log("trying to get collection from modulenft", collection);
+
+      if (!collection) {
+        collection = await provider.fetchCollection(chainId, {
+          contract,
+          tokenId,
+        });
+      }
     }
 
     if (!collection || _.isEmpty(collection)) {
