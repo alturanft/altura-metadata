@@ -12,6 +12,7 @@ import * as simplehash from "../../../../../src/fetchers/simplehash";
 import * as centerdev from "../../../../../src/fetchers/centerdev";
 import * as soundxyz from "../../../../../src/fetchers/soundxyz";
 import * as modulenft from "../../../../../src/fetchers/modulenft";
+import { logger } from "../../../../../src/logger";
 
 const api = async (req, res) => {
   try {
@@ -93,10 +94,14 @@ const api = async (req, res) => {
       throw new Error("No collection found");
     }
 
+    const extended = await extendCollectionMetadata(chainId, collection);
+    logger.info("v4-metadata-collection", extended);
+
     return res.status(200).json({
-      collection: await extendCollectionMetadata(chainId, collection),
+      collection: extended,
     });
   } catch (error) {
+    logger.error("v4-metadata-collection", error);
     return res.status(500).json({ error: `Internal error: ${error}` });
   }
 };

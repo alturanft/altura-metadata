@@ -13,6 +13,7 @@ import * as soundxyz from "../../../../../src/fetchers/soundxyz";
 import * as modulenft from "../../../../../src/fetchers/modulenft";
 
 import { RequestWasThrottledError } from "../../../../../src/fetchers/errors";
+import { logger } from "../../../../../src/logger";
 
 const api = async (req, res) => {
   try {
@@ -134,6 +135,7 @@ const api = async (req, res) => {
             .then((l) => l.map((metadata) => extendMetadata(chainId, metadata)))
         );
 
+        console.log("trying to get token from modulenft", metadata);
         if (metadata && metadata.length) {
           tokens = tokens.filter((token) => {
             return (
@@ -192,9 +194,10 @@ const api = async (req, res) => {
       ];
     }
 
+    logger.info("v4-metadata-token", metadata);
     return res.status(200).json({ metadata });
   } catch (error) {
-    console.log(error);
+    logger.error("v4-metadata-token", error);
     return res.status(500).json({ error: error.message });
   }
 };
