@@ -133,7 +133,7 @@ const api = async (req, res) => {
             .fetchTokens(chainId, tokens)
             .then((l) => l.map((metadata) => extendMetadata(chainId, metadata)))
         );
-        console.log("metadata", metadata);
+
         if (metadata && metadata.length) {
           tokens = tokens.filter((token) => {
             return (
@@ -144,7 +144,6 @@ const api = async (req, res) => {
               ) == -1
             );
           });
-          console.log(tokens);
         }
       } catch (error) {
         console.log(error);

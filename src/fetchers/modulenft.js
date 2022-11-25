@@ -84,7 +84,6 @@ export const fetchTokens = async (chainId, tokens) => {
   searchParams.append("token", nftIds.join(","));
 
   const url = `https://api.modulenft.xyz/api/v2/${network}/nft/batchGetToken?${searchParams.toString()}`;
-  console.log(url);
   const data = await axios
     .get(url, {
       headers: { accept: "application/json" },
@@ -102,7 +101,6 @@ export const fetchTokens = async (chainId, tokens) => {
 
       throw error;
     });
-  console.log(data);
 
   return data.map(parse).filter(Boolean);
 };
