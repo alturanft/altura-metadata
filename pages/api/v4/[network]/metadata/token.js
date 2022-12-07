@@ -193,7 +193,7 @@ const api = async (req, res) => {
       ];
     }
 
-    logger.info("v4-metadata-token", metadata);
+    logger.info("v4-metadata-token", metadata.length);
     return res.status(200).json({ metadata });
   } catch (error) {
     logger.error("v4-metadata-token", error);
