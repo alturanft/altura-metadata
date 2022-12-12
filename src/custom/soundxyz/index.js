@@ -28,6 +28,7 @@ export const getContractSlug = async (chainId, contract, tokenId) => {
                 tokenId: "${tokenId}"
             }) {
                 id
+                isGoldenEgg
                 openSeaMetadataAttributes {
                     traitType
                     value
@@ -52,8 +53,10 @@ export const getContractSlug = async (chainId, contract, tokenId) => {
                     coverImage {
                         url
                     }
-                    goldenEggImage {
+                    eggGame {
+                      goldenEggImage {
                         url
+                      }
                     }
                     track {
                         id
